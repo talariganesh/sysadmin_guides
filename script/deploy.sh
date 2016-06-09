@@ -1,5 +1,4 @@
-#!/bin/sh
- 
+#!/bin/bash
 ssh ec2-user@52.77.202.147 <<EOF
   cd /var/www/html
   git pull
