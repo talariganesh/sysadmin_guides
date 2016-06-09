@@ -1,9 +1,8 @@
 #!/bin/sh
  
-ssh app@APP.SERVER.IP.ADDRESS <<EOF
+ssh ssh ec2-user@52.77.202.147 <<EOF
   cd /var/www/html
   git pull
-  npm install --production
   sudo service nginx restart
   sudo service php-fpm restart
   exit
