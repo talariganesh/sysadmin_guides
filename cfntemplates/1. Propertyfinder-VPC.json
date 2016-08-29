@@ -1,0 +1,372 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+
+  "Description" : " Tempalte to launch Custom VPC with two availablilty zones. **WARNING** This template might create one or more Amazon EC2 instances. You will be billed for the AWS resources used if you create a stack from this template.",
+
+  "Parameters" : {
+
+    "KeyName" : {
+      "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instances",
+      "Type" : "String",
+      "MinLength": "1",
+      "MaxLength": "64",
+      "AllowedPattern" : "[-_ a-zA-Z0-9]*",
+      "Default" : "gloganni",
+      "ConstraintDescription" : "can contain only alphanumeric characters, spaces, dashes and underscores."
+    },  
+   
+   "VpcCidr" : {
+      "Description" : "CIDR address for the VPC to be created.",
+      "Type" : "String",
+      "Default" : "10.1.0.0/16"
+    },
+	 
+	"PublicSubnet1a" : {
+      "Description" : "Address range for a public subnet to be created in AZ1.",
+      "Type" : "String",
+      "Default" : "10.1.1.0/24"
+    },
+    "PublicSubnet2b" : {
+      "Description" : "Address range for a public subnet to be created in AZ2.",
+      "Type" : "String",
+      "Default" : "10.1.2.0/24"
+    },
+	"WebSubnet1a" : {
+      "Description" : "Address range for a Web subnet to be created in AZ1.",
+      "Type" : "String",
+      "Default" : "10.1.3.0/24"
+    },
+	"WebSubnet2b" : {
+      "Description" : "Address range for a Web subnet to be created in AZ2.",
+      "Type" : "String",
+      "Default" : "10.1.4.0/24"
+    },
+	"PostgreDBSubnet1a" : {
+      "Description" : "Address range for a DB subnet to be created in AZ1.",
+      "Type" : "String",
+      "Default" : "10.1.5.0/24"
+    },
+	"PostgreDBSubnet2b" : {
+      "Description" : "Address range for a DB subnet to be created in AZ2.",
+      "Type" : "String",
+      "Default" : "10.1.6.0/24"
+    },
+    "CacheDBSubnet1a" : {
+      "Description" : "Address range for a DB subnet to be created in AZ1.",
+      "Type" : "String",
+      "Default" : "10.1.7.0/24"
+    },
+	"CacheDBSubnet2b" : {
+      "Description" : "Address range for a DB subnet to be created in AZ2.",
+      "Type" : "String",
+      "Default" : "10.1.8.0/24"
+    },
+    "AvailabilityZone1" : {
+      "Description" : "First AZ to use for Public1/private1 subnets.",
+      "Type" : "String",
+      "Default" : "us-east-1a"
+    },
+	 "AvailabilityZone2" : {
+      "Description" : "First AZ to use for Public2/private2 subnets.",
+      "Type" : "String",
+      "Default" : "us-east-1c"
+    },
+    
+    "SSHGWInstanceType" : {
+      "Description" : "Instance type for Ec2 Instances.",
+      "Type" : "String",
+      "Default" : "t2.micro",
+      "AllowedValues" : [ "t1.micro","t2.micro"],
+      "ConstraintDescription" : "must be a valid EC2 instance type."
+    }
+    
+  },
+
+  "Mappings" : {
+    
+	"RegionMap" : {
+      "us-east-1"      : { "AMI" : "ami-6869aa05" }
+    }
+  },
+
+  "Resources" : {
+  
+    "VPC" : {
+      "Type" : "AWS::EC2::VPC",
+      "Properties" : {
+        "CidrBlock" : { "Ref" : "VpcCidr" },
+        "Tags" : [
+           { "Key" : "Network", "Value" : "Public" }
+        ]
+      }
+    },
+	
+	"PublicSubnet1" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "AvailabilityZone" : { "Ref" : "AvailabilityZone1" },
+        "CidrBlock" : { "Ref" : "PublicSubnet1a" },
+        "Tags" : [
+          { "Key" : "Network", "Value" : "Public" },
+		  { "Key" : "Name", "Value" : "Public1a" }
+		  
+        ]
+      }
+    },
+	
+	"PublicSubnet2" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "AvailabilityZone" : { "Ref" : "AvailabilityZone2" },
+        "CidrBlock" : { "Ref" : "PublicSubnet2b" },
+        "Tags" : [
+          { "Key" : "Network", "Value" : "Public" },
+		  { "Key" : "Name", "Value" : "Public2b" }
+		  
+        ]
+      }
+    },
+	
+	"WebSubnet1" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "AvailabilityZone" : { "Ref" : "AvailabilityZone1" },
+        "CidrBlock" : { "Ref" : "WebSubnet1a" },
+        "Tags" : [
+          { "Key" : "Network", "Value" : "Private" },
+		  { "Key" : "Name", "Value" : "WebSubnet1a" }
+        ]
+      }
+    },
+	 "WebSubnet2" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "AvailabilityZone" : { "Ref" : "AvailabilityZone2" },
+        "CidrBlock" : { "Ref" : "WebSubnet2b" },
+        "Tags" : [
+          { "Key" : "Network", "Value" : "Private" },
+		  { "Key" : "Name", "Value" : "WebSubnet2b" }
+        ]
+      }
+    },
+	
+	"PostgreDBSubnet1" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "AvailabilityZone" : { "Ref" : "AvailabilityZone1" },
+        "CidrBlock" : { "Ref" : "PostgreDBSubnet1a" },
+        "Tags" : [
+          { "Key" : "Network", "Value" : "Private" },
+		  { "Key" : "Name", "Value" : "PostgreDBSubnet1a" }
+        ]
+      }
+    },
+	
+    "PostgreDBSubnet2" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "AvailabilityZone" : { "Ref" : "AvailabilityZone2" },
+        "CidrBlock" : { "Ref" : "PostgreDBSubnet2b" },
+        "Tags" : [
+          { "Key" : "Network", "Value" : "Private" },
+		  { "Key" : "Name", "Value" : "PostgreDBSubnet2b" }
+        ]
+      }
+    },
+	
+    "CacheDBSubnet1" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "AvailabilityZone" : { "Ref" : "AvailabilityZone1" },
+        "CidrBlock" : { "Ref" : "CacheDBSubnet1a" },
+        "Tags" : [
+          { "Key" : "Network", "Value" : "Private" },
+		  { "Key" : "Name", "Value" : "CacheDBSubnet1a" }
+        ]
+      }
+    },
+    
+    "CacheDBSubnet2" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "AvailabilityZone" : { "Ref" : "AvailabilityZone1" },
+        "CidrBlock" : { "Ref" : "CacheDBSubnet2b" },
+        "Tags" : [
+          { "Key" : "Network", "Value" : "Private" },
+		  { "Key" : "Name", "Value" : "CacheDBSubnet2b" }
+        ]
+      }
+    },
+    
+	"InternetGateway" : {
+      "Type" : "AWS::EC2::InternetGateway",
+      "Properties" : {
+        "Tags" : [
+		{ "Key" : "Network", "Value" : "Public" }
+        ]
+      }
+    },
+
+    "GatewayToInternet" : {
+       "Type" : "AWS::EC2::VPCGatewayAttachment",
+       "Properties" : {
+         "VpcId" : { "Ref" : "VPC" },
+         "InternetGatewayId" : { "Ref" : "InternetGateway" }
+       }
+    },
+	
+	"PublicRouteTable" : {
+      "Type" : "AWS::EC2::RouteTable",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "Tags" : [
+          { "Key" : "Network", "Value" : "Public" },
+		  { "Key" : "Name", "Value" : "PublicRouteTable" }
+        ]
+      }
+    },
+
+    "PrivateRouteTable1" : {
+      "Type" : "AWS::EC2::RouteTable",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "Tags" : [
+          { "Key" : "Network", "Value" : "Private" },
+		  { "Key" : "Name", "Value" : "PrivateRouteTable1" }
+        ]
+      }
+    },
+	
+    "PrivateRouteTable2" : {
+      "Type" : "AWS::EC2::RouteTable",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "Tags" : [
+          { "Key" : "Network", "Value" : "Private" },
+		  { "Key" : "Name", "Value" : "PrivateRouteTable2" }
+        ]
+      }
+    },
+	
+	"PublicRoute" : {
+      "Type" : "AWS::EC2::Route",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "PublicRouteTable" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "GatewayId" : { "Ref" : "InternetGateway" }
+      }
+    },
+	
+	"PublicSubnet1RTAssoc" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PublicSubnet1" },
+        "RouteTableId" : { "Ref" : "PublicRouteTable" }
+      }
+    },
+	
+    "PublicSubnet2RTAssoc" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PublicSubnet2" },
+        "RouteTableId" : { "Ref" : "PublicRouteTable" }
+      }
+    },
+	
+	"WebSubnet1RTAssoc" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "WebSubnet1" },
+        "RouteTableId" : { "Ref" : "PrivateRouteTable1" }
+      }
+    },
+	
+	"WebSubnet2RTAssoc" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "WebSubnet2" },
+        "RouteTableId" : { "Ref" : "PrivateRouteTable2" }
+      }
+    },
+	
+	"PostgreDBSubnet1RTAssoc" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PostgreDBSubnet1" },
+        "RouteTableId" : { "Ref" : "PrivateRouteTable1" }
+      }
+    },
+	
+	"PostgreDBSubnet2RTAssoc" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PostgreDBSubnet2" },
+        "RouteTableId" : { "Ref" : "PrivateRouteTable2" }
+      }
+    },
+    
+    "CacheDBSubnet1RTAssoc" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "CacheDBSubnet1" },
+        "RouteTableId" : { "Ref" : "PrivateRouteTable1" }
+      }
+    },
+    
+    "CacheDBSubnet2RTAssoc" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "CacheDBSubnet2" },
+        "RouteTableId" : { "Ref" : "PrivateRouteTable2" }
+      }
+    },
+    
+    "SSHGWEIP" : {
+      "Type" : "AWS::EC2::EIP"
+    },
+    
+    "SSHGWIPAssoc" : {
+      "Type" : "AWS::EC2::EIPAssociation",
+      "Properties" : {
+        "InstanceId" : { "Ref" : "SSHGW" },
+        "EIP" : { "Ref" : "SSHGWEIP" }
+      }
+    },
+    
+    "SSHGW" : {
+      "Type" : "AWS::EC2::Instance",
+      "Properties" : {
+        "ImageId" : { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "AMI" ]},
+        "SecurityGroupIds" : [{ "Ref" : "SSHGWSecurityGroup" }],
+        "InstanceType" : { "Ref" : "SSHGWInstanceType" },
+        "KeyName" : { "Ref" : "KeyName" },
+		"SubnetId" : { "Ref" : "PublicSubnet1" },
+        "Tags" : [ { "Key" : "Name", "Value" : "SSHGW" } ]
+	    }
+    },
+	
+	"SSHGWSecurityGroup" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "GroupDescription" : "Rules for allowing access to SSHGW",
+        "VpcId" : { "Ref" : "VPC" },
+        "SecurityGroupIngress" : [
+           { "IpProtocol" : "tcp", "FromPort" : "22",  "ToPort" : "22",  "CidrIp" : "0.0.0.0/0" } ,
+           { "IpProtocol" : "-1", "FromPort" : "0",  "ToPort" : "65535",  "CidrIp" : { "Ref" : "VpcCidr" }} ],
+        "SecurityGroupEgress" : [
+           { "IpProtocol" : "-1", "FromPort" : "0", "ToPort" : "65535", "CidrIp" : "0.0.0.0/0" } ]
+      }
+    }
+	   
+  }
+
+  
+}
